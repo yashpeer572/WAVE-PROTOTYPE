@@ -94,7 +94,7 @@ class TransformationItemController extends Controller
 
         $transformationItem->update($data);
 
-        return response()->json($transformationItem->fresh());
+        return response()->json($transformationItem->fresh(['initiative.workstream', 'owner']));
     }
 
     public function destroy(TransformationItem $transformationItem): JsonResponse

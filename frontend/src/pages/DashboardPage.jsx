@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { dashboard as dashboardApi } from '../services/api';
-import { RagBadge, StatusBadge, RiskBadge } from '../components/Badge';
+import { StatusBadge, RiskBadge } from '../components/Badge';
 
 const RAG_COLORS = { Green: '#22c55e', Amber: '#f59e0b', Red: '#ef4444' };
 const STATUS_COLORS = { 'Not Started': '#94a3b8', 'In Progress': '#3b82f6', Completed: '#22c55e', Blocked: '#ef4444' };

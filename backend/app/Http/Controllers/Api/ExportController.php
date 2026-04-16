@@ -21,7 +21,7 @@ class ExportController extends Controller
 
         return response()->stream(function () use ($type) {
             $handle = fopen('php://output', 'w');
-            fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
 
             match ($type) {
                 'transformation' => $this->exportTransformation($handle),
@@ -37,17 +37,20 @@ class ExportController extends Controller
 
     private function exportTransformation($handle): void
     {
-        fputcsv($handle, ['Workstream', 'Initiative', 'Objective', 'Owner Org', '5Flow Contact', 'Peer Contact', 'Start Date', 'End Date', 'Status', 'RAG', 'Success Metrics', 'Risks']);
+        fputcsv($handle, ['Workstream', 'Initiative', 'Objective', 'Owner', 'Start Date', 'End Date', 'Status', 'RAG', 'Success Metrics', 'Risks']);
 
-        TransformationItem::with('initiative.workstream')->chunk(100, function ($items) use ($handle) {
+        TransformationItem::with(['initiative.workstream', 'owner'])->chunk(100, function ($items) use ($handle) {
             foreach ($items as $item) {
+                $ownerLabel = $item->owner?->name
+                    ?? ($item->owner_org === 'Peer'
+                        ? ($item->peer_contact ?: $item->five_flow_contact)
+                        : ($item->five_flow_contact ?: $item->peer_contact))
+                    ?? '';
                 fputcsv($handle, [
                     $item->initiative->workstream->name ?? '',
                     $item->initiative->name ?? '',
                     $item->objective,
-                    $item->owner_org,
-                    $item->five_flow_contact,
-                    $item->peer_contact,
+                    $ownerLabel,
                     $item->start_date?->toDateString(),
                     $item->end_date?->toDateString(),
                     $item->status,

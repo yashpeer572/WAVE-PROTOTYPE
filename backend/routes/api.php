@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\ExportController;
 use App\Http\Controllers\Api\InitiativeController;
 use App\Http\Controllers\Api\KtSessionController;
 use App\Http\Controllers\Api\TransformationItemController;
+use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WorkstreamController;
 use Illuminate\Support\Facades\Route;
 
@@ -16,6 +17,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+    Route::get('/users', [UserController::class, 'index']);
 
     Route::apiResource('workstreams', WorkstreamController::class);
     Route::get('workstreams/{workstream}/initiatives', [WorkstreamController::class, 'initiatives']);
