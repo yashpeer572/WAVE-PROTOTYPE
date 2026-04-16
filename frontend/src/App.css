@@ -130,6 +130,38 @@ body {
 .btn--full { width: 100%; justify-content: center; }
 .action-buttons { display: flex; gap: 4px; align-items: center; }
 
+/* Table row actions (icon buttons, muted delete) — matches transformation plan */
+.datatable th.datatable__actions-col,
+.datatable td.datatable__actions-cell {
+  text-align: right;
+  width: 1%;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.datatable td.datatable__actions-cell .action-buttons {
+  justify-content: flex-end;
+}
+.datatable td.datatable__actions-cell .action-buttons .btn {
+  background: transparent;
+  border: 1px solid transparent;
+}
+.datatable td.datatable__actions-cell .action-buttons .btn--secondary {
+  color: var(--text-muted);
+}
+.datatable td.datatable__actions-cell .action-buttons .btn--secondary:hover {
+  background: rgba(15, 23, 42, 0.06);
+  border-color: var(--border);
+  color: var(--text);
+}
+.datatable td.datatable__actions-cell .action-buttons .btn--danger {
+  color: var(--text-muted);
+}
+.datatable td.datatable__actions-cell .action-buttons .btn--danger:hover {
+  background: rgba(15, 23, 42, 0.06);
+  border-color: var(--border);
+  color: var(--text);
+}
+
 /* Badges */
 .badge {
   display: inline-block; padding: 2px 8px; border-radius: 10px;

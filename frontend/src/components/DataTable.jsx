@@ -62,7 +62,7 @@ export default function DataTable({ columns, data, onRowClick, emptyMessage = 'N
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={col.sortable !== false ? 'datatable__sortable' : ''}
+                  className={[col.sortable !== false ? 'datatable__sortable' : '', col.headerClassName || ''].filter(Boolean).join(' ')}
                   onClick={() => col.sortable !== false && handleSort(col.key)}
                 >
                   {col.label}
@@ -82,7 +82,7 @@ export default function DataTable({ columns, data, onRowClick, emptyMessage = 'N
                   onClick={() => onRowClick?.(row)}
                 >
                   {columns.map((col) => (
-                    <td key={col.key}>
+                    <td key={col.key} className={col.cellClassName || ''}>
                       {col.render ? col.render(row) : (col.accessor ? col.accessor(row) : row[col.key]) ?? '-'}
                     </td>
                   ))}
