@@ -11,10 +11,10 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         $users = [
-            ['username' => 'admin',  'name' => 'Admin User',      'email' => 'admin@wave.local',  'password' => 'admin123',  'role' => 'program_manager'],
-            ['username' => 'lead',   'name' => 'Workstream Lead', 'email' => 'lead@wave.local',   'password' => 'lead123',   'role' => 'workstream_lead'],
-            ['username' => 'member', 'name' => 'Team Member',     'email' => 'member@wave.local', 'password' => 'member123', 'role' => 'team_member'],
-            ['username' => 'viewer', 'name' => 'Stakeholder',     'email' => 'viewer@wave.local', 'password' => 'viewer123', 'role' => 'viewer'],
+            ['username' => 'admin',  'name' => 'Admin User',      'email' => 'admin@wave.local',  'password' => 'admin123',  'owner_org' => '5Flow', 'role' => 'program_manager'],
+            ['username' => 'lead',   'name' => 'Workstream Lead', 'email' => 'lead@wave.local',   'password' => 'lead123',   'owner_org' => '5Flow', 'role' => 'workstream_lead'],
+            ['username' => 'member', 'name' => 'Team Member',     'email' => 'member@wave.local', 'password' => 'member123', 'owner_org' => '5Flow', 'role' => 'team_member'],
+            ['username' => 'viewer', 'name' => 'Stakeholder',     'email' => 'viewer@wave.local', 'password' => 'viewer123', 'owner_org' => 'Peer', 'role' => 'viewer'],
         ];
 
         foreach ($users as $data) {

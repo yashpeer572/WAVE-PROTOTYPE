@@ -12,7 +12,8 @@ class UserController extends Controller
     {
         $users = User::query()
             ->orderBy('name')
-            ->get(['id', 'name', 'email']);
+            ->orderBy('username')
+            ->get(['id', 'name', 'username', 'email', 'owner_org']);
 
         return response()->json($users);
     }
