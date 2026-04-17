@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   dependencies as api,
   workstreams as wsApi,
@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext';
 import DataTable from '../components/DataTable';
 import FilterBar from '../components/FilterBar';
 import Modal from '../components/Modal';
+import { RiskBadge, StatusBadge } from '../components/Badge';
 import toast from 'react-hot-toast';
 
 function IconEdit() {
@@ -109,22 +110,8 @@ export default function DependenciesPage() {
     { key: 'description', label: 'Description' },
     { key: 'type', label: 'Type' },
     { key: 'target_date', label: 'Target Date', render: (r) => r.target_date?.slice(0, 10) || '-' },
-    { key: 'status', label: 'Status', render: (r) => <span className="dependency-tracker__plain-value">{r.status || '—'}</span> },
-    {
-      key: 'risk',
-      label: 'Risk',
-      render: (r) => {
-        const risk = r.risk?.trim() || '';
-        const isHigh = risk.toLowerCase() === 'high';
-        return (
-          <span
-            className={`dependency-tracker__plain-value${isHigh ? ' dependency-tracker__risk--high' : ''}`}
-          >
-            {risk || '—'}
-          </span>
-        );
-      },
-    },
+    { key: 'status', label: 'Status' },
+    { key: 'risk', label: 'Risk' },
     ...(canEdit() ? [{
       key: 'actions',
       label: 'Actions',
@@ -171,7 +158,7 @@ export default function DependenciesPage() {
         onChange={(k, v) => setFilters((p) => ({ ...p, [k]: v || undefined }))}
         onClear={() => setFilters({})}
       />
-      {loading ? <div className="page-loading">Loading...</div> : <DataTable columns={columns} data={items} showRecordCount={false} />}
+      {loading ? <div className="page-loading">Loading...</div> : <DataTable columns={columns} data={items} />}
       <Modal isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditItem(null); }} title={editItem ? 'Edit Dependency' : 'Add Dependency'} size="lg">
         <DependencyForm
           item={editItem}
