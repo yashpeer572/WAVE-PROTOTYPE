@@ -1,5 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
-import { dependencies as api, workstreams as wsApi } from '../services/api';
+import {
+  dependencies as api,
+  workstreams as wsApi,
+  initiatives as initApi,
+  transformationItems as taskApi
+} from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import DataTable from '../components/DataTable';
 import FilterBar from '../components/FilterBar';
@@ -28,6 +33,8 @@ export default function DependenciesPage() {
   const { canEdit, canDelete } = useAuth();
   const [items, setItems] = useState([]);
   const [workstreams, setWorkstreams] = useState([]);
+  const [initiatives, setInitiatives] = useState([]);
+  const [tasks, setTasks] = useState([]);
   const [filters, setFilters] = useState({});
   const [modalOpen, setModalOpen] = useState(false);
   const [editItem, setEditItem] = useState(null);
@@ -35,8 +42,18 @@ export default function DependenciesPage() {
 
   const fetchData = useCallback(() => {
     setLoading(true);
-    Promise.all([api.list(filters), wsApi.list()])
-      .then(([res, wsRes]) => { setItems(res.data); setWorkstreams(wsRes.data); })
+    Promise.all([
+      api.list(filters),
+      wsApi.list(),
+      initApi.list(),
+      taskApi.list()
+    ])
+      .then(([res, wsRes, initRes, taskRes]) => {
+        setItems(res.data);
+        setWorkstreams(wsRes.data);
+        setInitiatives(initRes.data);
+        setTasks(taskRes.data);
+      })
       .finally(() => setLoading(false));
   }, [filters]);
 
@@ -63,10 +80,34 @@ export default function DependenciesPage() {
 
   const columns = [
     { key: 'dependency_id', label: 'ID' },
-    { key: 'workstreams', label: 'Workstreams', render: (r) => r.workstreams?.map((w) => w.name).join(', ') || '-' },
+    {
+      key: 'linked_to',
+      label: 'Dependency',
+      render: (r) => {
+        const links = [];
+        // Laravel Eloquent relations are usually snake_case in JSON
+        r.workstreams?.forEach(w => links.push({ type: 'WS', name: w.name }));
+        r.initiatives?.forEach(i => links.push({ type: 'Init', name: i.name }));
+        r.transformation_items?.forEach(t => links.push({ type: 'Task', name: t.objective }));
+
+        // Handling custom "Other" links if provided by backend in a separate property
+        r.other_links?.forEach(o => links.push({ type: 'Other', name: o.metadata }));
+
+        if (links.length === 0) return '-';
+        return (
+          <div className="dependency-links-cell">
+            {links.map((l, i) => (
+              <span key={i} className="badge badge--secondary" style={{ marginRight: '4px', marginBottom: '4px' }}>
+                <small style={{ opacity: 0.7, marginRight: '4px' }}>{l.type}:</small>
+                {l.name}
+              </span>
+            ))}
+          </div>
+        );
+      }
+    },
     { key: 'description', label: 'Description' },
     { key: 'type', label: 'Type' },
-    { key: 'dependent_on', label: 'Dependent On' },
     { key: 'target_date', label: 'Target Date', render: (r) => r.target_date?.slice(0, 10) || '-' },
     { key: 'status', label: 'Status', render: (r) => <span className="dependency-tracker__plain-value">{r.status || '—'}</span> },
     {
@@ -131,14 +172,21 @@ export default function DependenciesPage() {
         onClear={() => setFilters({})}
       />
       {loading ? <div className="page-loading">Loading...</div> : <DataTable columns={columns} data={items} showRecordCount={false} />}
-      <Modal isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditItem(null); }} title={editItem ? 'Edit Dependency' : 'Add Dependency'}>
-        <DependencyForm item={editItem} workstreams={workstreams} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditItem(null); }} />
+      <Modal isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditItem(null); }} title={editItem ? 'Edit Dependency' : 'Add Dependency'} size="lg">
+        <DependencyForm
+          item={editItem}
+          workstreams={workstreams}
+          initiatives={initiatives}
+          tasks={tasks}
+          onSave={handleSave}
+          onCancel={() => { setModalOpen(false); setEditItem(null); }}
+        />
       </Modal>
     </div>
   );
 }
 
-function DependencyForm({ item, workstreams, onSave, onCancel }) {
+function DependencyForm({ item, workstreams, initiatives, tasks, onSave, onCancel }) {
   const [form, setForm] = useState({
     dependency_id: item?.dependency_id || '',
     description: item?.description || '',
@@ -149,8 +197,19 @@ function DependencyForm({ item, workstreams, onSave, onCancel }) {
     risk: item?.risk || 'Medium',
     mitigation: item?.mitigation || '',
     escalation: item?.escalation || '',
-    workstream_ids: item?.workstreams?.map((w) => w.id) || [],
+    links: []
   });
+
+  useEffect(() => {
+    if (item) {
+      const initialLinks = [];
+      item.workstreams?.forEach(w => initialLinks.push({ type: 'Workstream', id: w.id }));
+      item.initiatives?.forEach(i => initialLinks.push({ type: 'Initiative', id: i.id }));
+      item.transformation_items?.forEach(t => initialLinks.push({ type: 'Task', id: t.id }));
+      // Metadata (Others) is handled in the pivot, but for display we might need a dedicated array
+      setForm(p => ({ ...p, links: initialLinks }));
+    }
+  }, [item]);
 
   useEffect(() => {
     if (!item && !form.dependency_id) {
@@ -159,6 +218,21 @@ function DependencyForm({ item, workstreams, onSave, onCancel }) {
   }, [item]);
 
   const handleChange = (k, v) => setForm((p) => ({ ...p, [k]: v }));
+
+  const addLink = () => {
+    setForm(p => ({ ...p, links: [...p.links, { type: 'Workstream', id: '', metadata: '' }] }));
+  };
+
+  const updateLink = (index, field, value) => {
+    const newLinks = [...form.links];
+    newLinks[index][field] = value;
+    if (field === 'type') newLinks[index].id = ''; // Reset ID when type changes
+    setForm(p => ({ ...p, links: newLinks }));
+  };
+
+  const removeLink = (index) => {
+    setForm(p => ({ ...p, links: p.links.filter((_, i) => i !== index) }));
+  };
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); onSave(form); }} className="modal-form">
@@ -172,9 +246,54 @@ function DependencyForm({ item, workstreams, onSave, onCancel }) {
         </div>
       </div>
       <div className="form-group"><label>Description</label><textarea value={form.description} onChange={(e) => handleChange('description', e.target.value)} rows={2} /></div>
+
+      <div className="dependency-form__links" style={{ marginBottom: '20px', padding: '15px', background: 'rgba(0,0,0,0.02)', borderRadius: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <label style={{ fontWeight: 600 }}>Dependency</label>
+          <button type="button" className="btn btn--sm btn--secondary" onClick={addLink}>+ Add Link</button>
+        </div>
+        {form.links.length === 0 && <p className="text-muted" style={{ fontSize: '0.9rem' }}>No links added. This dependency is currently standalone.</p>}
+        {form.links.map((link, idx) => (
+          <div key={idx} className="form-row" style={{ alignItems: 'flex-end', marginBottom: '10px', background: '#fff', padding: '10px', borderRadius: '4px', border: '1px solid #eee' }}>
+            <div className="form-group" style={{ flex: 2 }}>
+              <label>Type</label>
+              <select value={link.type} onChange={(e) => updateLink(idx, 'type', e.target.value)}>
+                <option value="Workstream">Workstream</option>
+                <option value="Initiative">Initiative</option>
+                <option value="Task">Task (Milestone)</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div className="form-group" style={{ flex: 3 }}>
+              {link.type === 'Other' ? (
+                <>
+                  <label>Label</label>
+                  <input
+                    placeholder="Enter entity description"
+                    value={link.metadata || ''}
+                    onChange={(e) => updateLink(idx, 'metadata', e.target.value)}
+                    required
+                  />
+                </>
+              ) : (
+                <>
+                  <label>Select {link.type}</label>
+                  <select value={link.id} onChange={(e) => updateLink(idx, 'id', e.target.value)} required>
+                    <option value="">Choose...</option>
+                    {link.type === 'Workstream' && workstreams.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+                    {link.type === 'Initiative' && initiatives.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
+                    {link.type === 'Task' && tasks.map(t => <option key={t.id} value={t.id}>{t.objective}</option>)}
+                  </select>
+                </>
+              )}
+            </div>
+            <button type="button" className="btn btn--sm btn--danger" style={{ marginBottom: '4px' }} onClick={() => removeLink(idx)}>×</button>
+          </div>
+        ))}
+      </div>
+
       <div className="form-row">
-        <div className="form-group"><label>Dependent On</label><input value={form.dependent_on} onChange={(e) => handleChange('dependent_on', e.target.value)} /></div>
-        <div className="form-group"><label>Target Date</label><input type="date" value={form.target_date} onChange={(e) => handleChange('target_date', e.target.value)} /></div>
+        <div className="form-group" style={{ flex: 1 }}><label>Target Date</label><input type="date" value={form.target_date} onChange={(e) => handleChange('target_date', e.target.value)} style={{ width: '100%' }} /></div>
       </div>
       <div className="form-row">
         <div className="form-group">

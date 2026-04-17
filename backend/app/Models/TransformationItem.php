@@ -49,6 +49,6 @@ class TransformationItem extends Model
 
     public function dependencies(): BelongsToMany
     {
-        return $this->belongsToMany(Dependency::class, 'item_dependencies');
+        return $this->morphToMany(Dependency::class, 'linkable', 'dependency_links');
     }
 }

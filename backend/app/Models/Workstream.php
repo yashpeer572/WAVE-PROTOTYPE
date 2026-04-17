@@ -34,7 +34,7 @@ class Workstream extends Model
 
     public function dependencies(): BelongsToMany
     {
-        return $this->belongsToMany(Dependency::class, 'dependency_workstreams');
+        return $this->morphToMany(Dependency::class, 'linkable', 'dependency_links');
     }
 
     public function actions(): HasMany
