@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import DataTable from '../components/DataTable';
 import FilterBar from '../components/FilterBar';
 import Modal from '../components/Modal';
-import { RiskBadge, StatusBadge } from '../components/Badge';
 import toast from 'react-hot-toast';
 
 function IconEdit() {
@@ -69,8 +68,22 @@ export default function DependenciesPage() {
     { key: 'type', label: 'Type' },
     { key: 'dependent_on', label: 'Dependent On' },
     { key: 'target_date', label: 'Target Date', render: (r) => r.target_date?.slice(0, 10) || '-' },
-    { key: 'status', label: 'Status', render: (r) => <StatusBadge value={r.status} /> },
-    { key: 'risk', label: 'Risk', render: (r) => <RiskBadge value={r.risk} /> },
+    { key: 'status', label: 'Status', render: (r) => <span className="dependency-tracker__plain-value">{r.status || '—'}</span> },
+    {
+      key: 'risk',
+      label: 'Risk',
+      render: (r) => {
+        const risk = r.risk?.trim() || '';
+        const isHigh = risk.toLowerCase() === 'high';
+        return (
+          <span
+            className={`dependency-tracker__plain-value${isHigh ? ' dependency-tracker__risk--high' : ''}`}
+          >
+            {risk || '—'}
+          </span>
+        );
+      },
+    },
     ...(canEdit() ? [{
       key: 'actions',
       label: 'Actions',
@@ -117,7 +130,7 @@ export default function DependenciesPage() {
         onChange={(k, v) => setFilters((p) => ({ ...p, [k]: v || undefined }))}
         onClear={() => setFilters({})}
       />
-      {loading ? <div className="page-loading">Loading...</div> : <DataTable columns={columns} data={items} />}
+      {loading ? <div className="page-loading">Loading...</div> : <DataTable columns={columns} data={items} showRecordCount={false} />}
       <Modal isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditItem(null); }} title={editItem ? 'Edit Dependency' : 'Add Dependency'}>
         <DependencyForm item={editItem} workstreams={workstreams} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditItem(null); }} />
       </Modal>

@@ -1,6 +1,8 @@
 import { useState, useMemo } from 'react';
 
-export default function DataTable({ columns, data, onRowClick, emptyMessage = 'No data found.' }) {
+export default function DataTable({
+  columns, data, onRowClick, emptyMessage = 'No data found.', showRecordCount = true,
+}) {
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
   const [search, setSearch] = useState('');
@@ -53,7 +55,9 @@ export default function DataTable({ columns, data, onRowClick, emptyMessage = 'N
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
         />
-        <span className="datatable__count">{sorted.length} record{sorted.length !== 1 ? 's' : ''}</span>
+        {showRecordCount && (
+          <span className="datatable__count">{sorted.length} record{sorted.length !== 1 ? 's' : ''}</span>
+        )}
       </div>
       <div className="datatable__scroll">
         <table className="datatable">

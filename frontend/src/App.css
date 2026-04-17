@@ -162,6 +162,19 @@ body {
   color: var(--text);
 }
 
+/* Dependency tracker: status / risk as plain text (no badge colours) */
+.datatable .dependency-tracker__plain-value {
+  color: var(--text);
+  background: transparent;
+  font-weight: 400;
+  padding: 0;
+  border-radius: 0;
+}
+.datatable .dependency-tracker__risk--high {
+  color: #991b1b;
+  font-weight: 600;
+}
+
 /* Badges */
 .badge {
   display: inline-block; padding: 2px 8px; border-radius: 10px;
@@ -344,6 +357,33 @@ body {
 .datatable__pagination span { font-size: 13px; color: var(--text-muted); }
 
 /* Transformation plan: workstream → initiative tree */
+table.datatable.transformation-tree {
+  table-layout: fixed;
+  width: 100%;
+}
+.transformation-tree > thead > tr > th,
+.transformation-tree > tbody > tr > td {
+  max-width: none;
+}
+.transformation-tree col.transformation-tree__col--milestone { width: 26%; }
+.transformation-tree col.transformation-tree__col--owner { width: 14%; }
+.transformation-tree col.transformation-tree__col--date { width: 9%; }
+.transformation-tree col.transformation-tree__col--status { width: 12%; }
+.transformation-tree col.transformation-tree__col--rag { width: 6rem; min-width: 6rem; }
+.transformation-tree col.transformation-tree__col--pct { width: 5.5rem; min-width: 5.5rem; }
+.transformation-tree--with-actions col.transformation-tree__col--milestone { width: 24%; }
+.transformation-tree--with-actions col.transformation-tree__col--owner { width: 13%; }
+.transformation-tree--with-actions col.transformation-tree__col--date { width: 8%; }
+.transformation-tree--with-actions col.transformation-tree__col--status { width: 11%; }
+.transformation-tree--with-actions col.transformation-tree__col--rag { width: 5.5rem; min-width: 5.5rem; }
+.transformation-tree--with-actions col.transformation-tree__col--pct { width: 5.25rem; min-width: 5.25rem; }
+.transformation-tree col.transformation-tree__col--actions { width: 5.75rem; min-width: 5.75rem; }
+.transformation-tree__th-pct {
+  text-align: right;
+}
+.transformation-tree thead th:nth-child(6) {
+  text-align: center;
+}
 .transformation-tree__ws-row td {
   padding: 0 !important;
   border-bottom: 1px solid var(--border);
@@ -351,6 +391,36 @@ body {
 }
 .transformation-tree__ws-toggle-cell {
   vertical-align: middle;
+}
+.transformation-tree__ws-rag-cell {
+  vertical-align: middle;
+  text-align: center;
+  padding: 8px 14px !important;
+  background: #e2e8f0;
+  border-bottom: 1px solid var(--border);
+}
+.transformation-tree__ws-pct-cell {
+  vertical-align: middle;
+  text-align: right;
+  white-space: nowrap;
+  padding: 8px 14px !important;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text);
+  background: #e2e8f0;
+  border-bottom: 1px solid var(--border);
+}
+.transformation-tree__item-rag-cell {
+  padding: 8px 14px !important;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+  vertical-align: middle;
+}
+.transformation-tree__item-pct-cell {
+  padding: 8px 14px !important;
+  background: #fff;
+  border-bottom: 1px solid var(--border);
 }
 .transformation-tree__ws-toggle {
   display: flex;
