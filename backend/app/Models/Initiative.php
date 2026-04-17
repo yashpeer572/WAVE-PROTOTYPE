@@ -19,4 +19,9 @@ class Initiative extends Model
     {
         return $this->hasMany(TransformationItem::class);
     }
+
+    public function dependencies()
+    {
+        return $this->morphToMany(Dependency::class, 'linkable', 'dependency_links');
+    }
 }

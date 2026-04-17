@@ -4,14 +4,18 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Dependency;
+use App\Models\Workstream;
+use App\Models\Initiative;
+use App\Models\TransformationItem;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DependencyController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $query = Dependency::with(['owner', 'workstreams']);
+        $query = Dependency::with(['owner', 'workstreams', 'initiatives', 'transformationItems']);
 
         if ($request->has('risk')) {
             $query->where('risk', $request->risk);
@@ -20,7 +24,15 @@ class DependencyController extends Controller
             $query->where('status', $request->status);
         }
 
-        return response()->json($query->get());
+        $items = $query->get()->map(function ($dep) {
+            $dep->other_links = DB::table('dependency_links')
+                ->where('dependency_id', $dep->id)
+                ->where('linkable_type', 'Other')
+                ->get();
+            return $dep;
+        });
+
+        return response()->json($items);
     }
 
     public function store(Request $request): JsonResponse
@@ -36,26 +48,31 @@ class DependencyController extends Controller
             'risk' => 'required|in:Low,Medium,High',
             'mitigation' => 'nullable|string',
             'escalation' => 'nullable|string',
-            'workstream_ids' => 'nullable|array',
-            'workstream_ids.*' => 'exists:workstreams,id',
+            'links' => 'nullable|array',
+            'links.*.type' => 'required|in:Workstream,Initiative,Task,Other',
+            'links.*.id' => 'required_if:links.*.type,Workstream,Initiative,Task',
+            'links.*.metadata' => 'nullable|string',
         ]);
 
-        $wsIds = $data['workstream_ids'] ?? [];
-        unset($data['workstream_ids']);
+        $links = $data['links'] ?? [];
+        unset($data['links']);
 
-        $dep = Dependency::create($data);
-
-        if (! empty($wsIds)) {
-            $dep->workstreams()->attach($wsIds);
-        }
-
-        return response()->json($dep->load(['owner', 'workstreams']), 201);
+        return DB::transaction(function() use ($data, $links) {
+            $dep = Dependency::create($data);
+            $this->syncLinks($dep, $links);
+            $dep->load(['owner', 'workstreams', 'initiatives', 'transformationItems']);
+            $dep->other_links = DB::table('dependency_links')
+                ->where('dependency_id', $dep->id)
+                ->where('linkable_type', 'Other')
+                ->get();
+            return response()->json($dep, 201);
+        });
     }
 
     public function show(Dependency $dependency): JsonResponse
     {
         return response()->json(
-            $dependency->load(['owner', 'workstreams', 'transformationItems'])
+            $dependency->load(['owner', 'workstreams', 'initiatives', 'transformationItems'])
         );
     }
 
@@ -71,18 +88,58 @@ class DependencyController extends Controller
             'risk' => 'sometimes|in:Low,Medium,High',
             'mitigation' => 'nullable|string',
             'escalation' => 'nullable|string',
-            'workstream_ids' => 'nullable|array',
-            'workstream_ids.*' => 'exists:workstreams,id',
+            'links' => 'nullable|array',
+            'links.*.type' => 'required|in:Workstream,Initiative,Task,Other',
+            'links.*.id' => 'required_if:links.*.type,Workstream,Initiative,Task',
+            'links.*.metadata' => 'nullable|string',
         ]);
 
-        if (isset($data['workstream_ids'])) {
-            $dependency->workstreams()->sync($data['workstream_ids']);
-            unset($data['workstream_ids']);
+        $links = $data['links'] ?? null;
+        unset($data['links']);
+
+        return DB::transaction(function() use ($data, $links, $dependency) {
+            $dependency->update($data);
+            if ($links !== null) {
+                $this->syncLinks($dependency, $links);
+            }
+            $dependency->refresh()->load(['owner', 'workstreams', 'initiatives', 'transformationItems']);
+            $dependency->other_links = DB::table('dependency_links')
+                ->where('dependency_id', $dependency->id)
+                ->where('linkable_type', 'Other')
+                ->get();
+            return response()->json($dependency);
+        });
+    }
+
+    private function syncLinks(Dependency $dependency, array $links): void
+    {
+        // Clear existing links
+        DB::table('dependency_links')->where('dependency_id', $dependency->id)->delete();
+
+        foreach ($links as $link) {
+            $type = $link['type'];
+            $id = $link['id'] ?? 0;
+            $metadata = $link['metadata'] ?? null;
+
+            $modelType = match($type) {
+                'Workstream' => Workstream::class,
+                'Initiative' => Initiative::class,
+                'Task' => TransformationItem::class,
+                'Other' => 'Other',
+                default => null
+            };
+
+            if ($modelType) {
+                DB::table('dependency_links')->insert([
+                    'dependency_id' => $dependency->id,
+                    'linkable_type' => $modelType,
+                    'linkable_id' => $id,
+                    'metadata' => $metadata,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
-
-        $dependency->update($data);
-
-        return response()->json($dependency->fresh(['owner', 'workstreams']));
     }
 
     public function destroy(Dependency $dependency): JsonResponse

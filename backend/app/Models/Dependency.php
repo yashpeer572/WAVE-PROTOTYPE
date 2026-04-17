@@ -37,11 +37,16 @@ class Dependency extends Model
 
     public function workstreams(): BelongsToMany
     {
-        return $this->belongsToMany(Workstream::class, 'dependency_workstreams');
+        return $this->morphedByMany(Workstream::class, 'linkable', 'dependency_links');
+    }
+
+    public function initiatives(): BelongsToMany
+    {
+        return $this->morphedByMany(Initiative::class, 'linkable', 'dependency_links');
     }
 
     public function transformationItems(): BelongsToMany
     {
-        return $this->belongsToMany(TransformationItem::class, 'item_dependencies');
+        return $this->morphedByMany(TransformationItem::class, 'linkable', 'dependency_links');
     }
 }
