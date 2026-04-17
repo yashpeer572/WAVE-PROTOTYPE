@@ -42,6 +42,10 @@ export const workstreams = {
   initiatives: (id) => api.get(`/workstreams/${id}/initiatives`),
 };
 
+export const users = {
+  list: () => api.get('/users'),
+};
+
 export const initiatives = {
   list: (params) => api.get('/initiatives', { params }),
   get: (id) => api.get(`/initiatives/${id}`),

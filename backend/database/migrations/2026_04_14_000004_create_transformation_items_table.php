@@ -19,6 +19,7 @@ return new class extends Migration
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
             $table->enum('status', ['Not Started', 'In Progress', 'Completed', 'Blocked'])->default('Not Started');
+            // RAG health (Red / Amber / Green), nullable when not assessed
             $table->enum('rag', ['Green', 'Amber', 'Red'])->nullable();
             $table->text('success_metrics')->nullable();
             $table->text('risks')->nullable();
