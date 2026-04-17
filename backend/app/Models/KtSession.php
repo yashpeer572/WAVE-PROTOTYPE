@@ -21,6 +21,7 @@ class KtSession extends Model
         'end_date',
         'current_stage',
         'overall_status',
+        'meet_link',
     ];
 
     protected function casts(): array

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 
-export default function DataTable({ columns, data, onRowClick, emptyMessage = 'No data found.' }) {
+export default function DataTable({ columns, data, onRowClick, emptyMessage = 'No data found.', toolbarExtra }) {
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
   const [search, setSearch] = useState('');
@@ -46,13 +46,16 @@ export default function DataTable({ columns, data, onRowClick, emptyMessage = 'N
   return (
     <div className="datatable-wrapper">
       <div className="datatable__toolbar">
-        <input
-          type="text"
-          className="datatable__search"
-          placeholder="Search..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-        />
+        <div className="datatable__toolbar-left">
+          <input
+            type="text"
+            className="datatable__search"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+          />
+          {toolbarExtra}
+        </div>
         <span className="datatable__count">{sorted.length} record{sorted.length !== 1 ? 's' : ''}</span>
       </div>
       <div className="datatable__scroll">
