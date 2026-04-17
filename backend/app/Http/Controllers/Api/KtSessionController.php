@@ -39,6 +39,7 @@ class KtSessionController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'current_stage' => 'nullable|in:Planned,In Progress,Completed',
             'overall_status' => 'nullable|string',
+            'meet_link' => 'nullable|url',
             'participant_ids' => 'nullable|array',
             'participant_ids.*' => 'exists:users,id',
         ]);
@@ -77,6 +78,7 @@ class KtSessionController extends Controller
             'end_date' => 'nullable|date|after_or_equal:start_date',
             'current_stage' => 'sometimes|in:Planned,In Progress,Completed',
             'overall_status' => 'nullable|string',
+            'meet_link' => 'nullable|url',
             'participant_ids' => 'nullable|array',
             'participant_ids.*' => 'exists:users,id',
         ]);

@@ -92,28 +92,16 @@ export default function ActionsPage() {
       ),
     },
     ...(canEdit() ? [{
-      key: 'actions',
-      label: 'Actions',
-      sortable: false,
+      key: 'actions', label: 'Actions', sortable: false,
       headerClassName: 'datatable__actions-col',
       cellClassName: 'datatable__actions-cell',
       render: (r) => (
         <div className="action-buttons">
-          <button
-            type="button"
-            className="btn btn--sm btn--secondary btn--icon"
-            aria-label="Edit action"
-            onClick={() => { setEditItem(r); setModalOpen(true); }}
-          >
+          <button type="button" className="btn btn--sm btn--secondary btn--icon" aria-label="Edit action" onClick={() => { setEditItem(r); setModalOpen(true); }}>
             <IconEdit />
           </button>
           {canDelete() && (
-            <button
-              type="button"
-              className="btn btn--sm btn--danger btn--icon"
-              aria-label="Delete action"
-              onClick={() => handleDelete(r)}
-            >
+            <button type="button" className="btn btn--sm btn--danger btn--icon" aria-label="Delete action" onClick={() => handleDelete(r)}>
               <IconTrash />
             </button>
           )}

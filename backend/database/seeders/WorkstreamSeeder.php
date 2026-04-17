@@ -10,7 +10,7 @@ class WorkstreamSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = User::where('username', 'admin')->first();
+        $admin = User::where('username', 'yash')->first();
 
         $workstreams = [
             'Governance',

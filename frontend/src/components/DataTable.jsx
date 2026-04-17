@@ -1,8 +1,6 @@
 import { useState, useMemo } from 'react';
 
-export default function DataTable({
-  columns, data, onRowClick, emptyMessage = 'No data found.', showRecordCount = true,
-}) {
+export default function DataTable({ columns, data, onRowClick, emptyMessage = 'No data found.', toolbarExtra }) {
   const [sortKey, setSortKey] = useState(null);
   const [sortDir, setSortDir] = useState('asc');
   const [search, setSearch] = useState('');
@@ -48,13 +46,16 @@ export default function DataTable({
   return (
     <div className="datatable-wrapper">
       <div className="datatable__toolbar">
-        <input
-          type="text"
-          className="datatable__search"
-          placeholder="Search..."
-          value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-        />
+        <div className="datatable__toolbar-left">
+          <input
+            type="text"
+            className="datatable__search"
+            placeholder="Search..."
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); setPage(0); }}
+          />
+          {toolbarExtra}
+        </div>
         {showRecordCount && (
           <span className="datatable__count">{sorted.length} record{sorted.length !== 1 ? 's' : ''}</span>
         )}
@@ -70,7 +71,7 @@ export default function DataTable({
                   onClick={() => col.sortable !== false && handleSort(col.key)}
                 >
                   {col.label}
-                  {sortKey === col.key && <span className="datatable__sort-icon">{sortDir === 'asc' ? ' \u25B2' : ' \u25BC'}</span>}
+                  {sortKey === col.key && <span className="datatable__sort-icon">{sortDir === 'asc' ? ' ▲' : ' ▼'}</span>}
                 </th>
               ))}
             </tr>
