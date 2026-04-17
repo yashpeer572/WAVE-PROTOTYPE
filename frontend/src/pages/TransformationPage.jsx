@@ -8,6 +8,7 @@ import {
   workstreams as wsApi,
 } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import FilterBar from '../components/FilterBar';
 import Modal from '../components/Modal';
 import { StatusBadge, RagHealthDot } from '../components/Badge';
 import toast from 'react-hot-toast';
@@ -693,33 +694,27 @@ export default function TransformationPage() {
           </div>
         )}
       </div>
+      <FilterBar
+        filters={[
+          { key: 'status', label: 'Status', options: ITEM_STATUSES },
+        ]}
+        values={{ status: filterStatus }}
+        onChange={(_, v) => setFilterStatus(v || '')}
+        onClear={() => setFilterStatus('')}
+      />
       {loading ? (
         <div className="page-loading">Loading...</div>
       ) : (
         <div className="datatable-wrapper datatable-wrapper--owner-tooltips">
-          <div className="datatable__toolbar transformation-toolbar">
-            <div className="transformation-toolbar__main">
-              <input
-                type="text"
-                className="datatable__search transformation-toolbar__search"
-                placeholder="Search milestones, initiatives…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                aria-label="Search"
-              />
-              <label className="transformation-toolbar__status-wrap">
-                <span className="transformation-toolbar__status-label">Status</span>
-                <select
-                  className="transformation-toolbar__status"
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  aria-label="Filter by status"
-                >
-                  <option value="">All</option>
-                  {ITEM_STATUSES.map((s) => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </label>
-            </div>
+          <div className="datatable__toolbar">
+            <input
+              type="text"
+              className="datatable__search"
+              placeholder="Search milestones, initiatives…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              aria-label="Search"
+            />
           </div>
           <div className="datatable__scroll">
             <table

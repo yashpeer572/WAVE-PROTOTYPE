@@ -4,8 +4,25 @@ import { useAuth } from '../context/AuthContext';
 import DataTable from '../components/DataTable';
 import FilterBar from '../components/FilterBar';
 import Modal from '../components/Modal';
-import { StatusBadge, PriorityBadge } from '../components/Badge';
 import toast from 'react-hot-toast';
+
+function IconEdit() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+    </svg>
+  );
+}
+
+function IconTrash() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M3 6h18" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+    </svg>
+  );
+}
 
 export default function ActionsPage() {
   const { canEdit, canDelete } = useAuth();
@@ -51,24 +68,62 @@ export default function ActionsPage() {
     { key: 'description', label: 'Description' },
     { key: 'source', label: 'Source' },
     { key: 'workstream', label: 'Workstream', accessor: (r) => r.workstream?.name },
-    { key: 'priority', label: 'Priority', render: (r) => <PriorityBadge value={r.priority} /> },
-    { key: 'due_date', label: 'Due Date', render: (r) => (
-      <span className={isOverdue(r) ? 'text-overdue' : ''}>{r.due_date?.slice(0, 10) || '-'} {isOverdue(r) && <span className="badge badge--overdue">OVERDUE</span>}</span>
-    )},
-    { key: 'status', label: 'Status', render: (r) => <StatusBadge value={r.status} /> },
+    {
+      key: 'priority',
+      label: 'Priority',
+      render: (r) => (
+        <span className="action-tracker__plain-value">{r.priority || '—'}</span>
+      ),
+    },
+    {
+      key: 'due_date',
+      label: 'Due Date',
+      render: (r) => (
+        <span className={isOverdue(r) ? 'text-overdue' : ''}>
+          {r.due_date?.slice(0, 10) || '—'}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (r) => (
+        <span className="action-tracker__plain-value">{r.status || '—'}</span>
+      ),
+    },
     ...(canEdit() ? [{
-      key: 'actions', label: 'Actions', sortable: false,
+      key: 'actions',
+      label: 'Actions',
+      sortable: false,
+      headerClassName: 'datatable__actions-col',
+      cellClassName: 'datatable__actions-cell',
       render: (r) => (
         <div className="action-buttons">
-          <button className="btn btn--sm btn--secondary" onClick={() => { setEditItem(r); setModalOpen(true); }}>Edit</button>
-          {canDelete() && <button className="btn btn--sm btn--danger" onClick={() => handleDelete(r)}>Del</button>}
+          <button
+            type="button"
+            className="btn btn--sm btn--secondary btn--icon"
+            aria-label="Edit action"
+            onClick={() => { setEditItem(r); setModalOpen(true); }}
+          >
+            <IconEdit />
+          </button>
+          {canDelete() && (
+            <button
+              type="button"
+              className="btn btn--sm btn--danger btn--icon"
+              aria-label="Delete action"
+              onClick={() => handleDelete(r)}
+            >
+              <IconTrash />
+            </button>
+          )}
         </div>
       ),
     }] : []),
   ];
 
   return (
-    <div className="page">
+    <div className="page page--action-tracker">
       <div className="page-header">
         <h2 className="page-title">Action Tracker</h2>
         {canEdit() && <button className="btn btn--primary" onClick={() => { setEditItem(null); setModalOpen(true); }}>+ Add Action</button>}
@@ -82,7 +137,7 @@ export default function ActionsPage() {
         onChange={(k, v) => setFilters((p) => ({ ...p, [k]: v || undefined }))}
         onClear={() => setFilters({})}
       />
-      {loading ? <div className="page-loading">Loading...</div> : <DataTable columns={columns} data={items} />}
+      {loading ? <div className="page-loading">Loading...</div> : <DataTable columns={columns} data={items} showRecordCount={false} />}
       <Modal isOpen={modalOpen} onClose={() => { setModalOpen(false); setEditItem(null); }} title={editItem ? 'Edit Action' : 'Add Action'}>
         <ActionForm item={editItem} workstreams={workstreams} onSave={handleSave} onCancel={() => { setModalOpen(false); setEditItem(null); }} />
       </Modal>
