@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import DataTable from '../components/DataTable';
 import Modal from '../components/Modal';
 import { StatusBadge } from '../components/Badge';
+import UserSearchInput from '../components/UserSearchInput';
 import toast from 'react-hot-toast';
 
 function IconEdit() {
@@ -226,7 +227,6 @@ export default function KtMasterPage() {
 function KtDetailModal({ item, onClose, onEdit, onRefresh, canEdit }) {
   const [allUsers, setAllUsers] = useState([]);
   const [inviteOpen, setInviteOpen] = useState(false);
-  const [inviteUserId, setInviteUserId] = useState('');
   const [inviting, setInviting] = useState(false);
 
   useEffect(() => {
@@ -236,15 +236,12 @@ function KtDetailModal({ item, onClose, onEdit, onRefresh, canEdit }) {
   const participantIds = new Set((item.participants || []).map((p) => p.id));
   const availableUsers = allUsers.filter((u) => !participantIds.has(u.id) && u.id !== item.kt_owner_id);
 
-  const handleInvite = async () => {
-    if (!inviteUserId) return;
+  const handleInvite = async (user) => {
     setInviting(true);
     try {
       const currentIds = (item.participants || []).map((p) => p.id);
-      await api.update(item.id, { participant_ids: [...currentIds, Number(inviteUserId)] });
+      await api.update(item.id, { participant_ids: [...currentIds, user.id] });
       toast.success('Participant added');
-      setInviteUserId('');
-      setInviteOpen(false);
       onRefresh(item.id);
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to add participant');
@@ -343,16 +340,13 @@ function KtDetailModal({ item, onClose, onEdit, onRefresh, canEdit }) {
 
           {inviteOpen && (
             <div className="kt-detail__invite">
-              <select value={inviteUserId} onChange={(e) => setInviteUserId(e.target.value)} className="kt-detail__invite-select">
-                <option value="">Select a user...</option>
-                {availableUsers.map((u) => (
-                  <option key={u.id} value={u.id}>{u.name} ({u.email})</option>
-                ))}
-              </select>
-              <button className="btn btn--primary btn--sm" onClick={handleInvite} disabled={!inviteUserId || inviting}>
-                {inviting ? 'Adding...' : 'Add'}
-              </button>
-              <button className="btn btn--secondary btn--sm" onClick={() => { setInviteOpen(false); setInviteUserId(''); }}>
+              <UserSearchInput
+                users={availableUsers}
+                onSelect={handleInvite}
+                placeholder="Search by name or email..."
+              />
+              {inviting && <span className="kt-detail__invite-status">Adding...</span>}
+              <button className="btn btn--secondary btn--sm" onClick={() => setInviteOpen(false)}>
                 Cancel
               </button>
             </div>
@@ -491,10 +485,11 @@ function KtForm({ item, workstreams, onSave, onCancel }) {
               ))}
             </div>
           )}
-          <select value="" onChange={(e) => handleAddParticipant(e.target.value)}>
-            <option value="">Add participant...</option>
-            {availableParticipants.map((u) => <option key={u.id} value={u.id}>{u.name} ({u.email})</option>)}
-          </select>
+          <UserSearchInput
+            users={availableParticipants}
+            onSelect={(user) => handleAddParticipant(user.id)}
+            placeholder="Search by name or email..."
+          />
         </div>
       </div>
 
