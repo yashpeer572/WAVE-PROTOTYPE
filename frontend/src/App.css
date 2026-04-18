@@ -327,16 +327,16 @@ table.datatable.transformation-tree {
 .transformation-tree col.transformation-tree__col--date { width: 9%; }
 .transformation-tree col.transformation-tree__col--status { width: 12%; }
 .transformation-tree col.transformation-tree__col--rag { width: 6rem; min-width: 6rem; }
-.transformation-tree col.transformation-tree__col--pct { width: 5.5rem; min-width: 5.5rem; }
+.transformation-tree col.transformation-tree__col--pct { width: 9rem; min-width: 9rem; }
 .transformation-tree--with-actions col.transformation-tree__col--milestone { width: 24%; }
 .transformation-tree--with-actions col.transformation-tree__col--owner { width: 13%; }
 .transformation-tree--with-actions col.transformation-tree__col--date { width: 8%; }
 .transformation-tree--with-actions col.transformation-tree__col--status { width: 11%; }
 .transformation-tree--with-actions col.transformation-tree__col--rag { width: 5.5rem; min-width: 5.5rem; }
-.transformation-tree--with-actions col.transformation-tree__col--pct { width: 5.25rem; min-width: 5.25rem; }
+.transformation-tree--with-actions col.transformation-tree__col--pct { width: 8.5rem; min-width: 8.5rem; }
 .transformation-tree col.transformation-tree__col--actions { width: 5.75rem; min-width: 5.75rem; }
 .transformation-tree__th-pct {
-  text-align: right;
+  text-align: center;
 }
 .transformation-tree thead th:nth-child(6) {
   text-align: center;
@@ -358,12 +358,8 @@ table.datatable.transformation-tree {
 }
 .transformation-tree__ws-pct-cell {
   vertical-align: middle;
-  text-align: right;
-  white-space: nowrap;
-  padding: 8px 14px !important;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  color: var(--text);
+  text-align: center;
+  padding: 8px 10px !important;
   background: #e2e8f0;
   border-bottom: 1px solid var(--border);
 }
@@ -378,6 +374,56 @@ table.datatable.transformation-tree {
   padding: 8px 14px !important;
   background: #fff;
   border-bottom: 1px solid var(--border);
+}
+
+/* Transformation plan: completion as segment timeline + % */
+.completion-timeline {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 0;
+}
+.completion-timeline--empty {
+  display: block;
+  text-align: center;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.completion-timeline--workstream .completion-timeline__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+  min-width: 0;
+}
+.completion-timeline__segments {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+  height: 10px;
+}
+.completion-timeline__segment {
+  flex: 1 1 0;
+  min-width: 3px;
+  max-width: 10px;
+  border-radius: 2px;
+  background: #cbd5e1;
+  box-sizing: border-box;
+}
+.completion-timeline__segment--done {
+  background: var(--green);
+}
+.completion-timeline__pct {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  min-width: 2.25rem;
+  text-align: right;
 }
 .transformation-tree__ws-toggle {
   display: flex;

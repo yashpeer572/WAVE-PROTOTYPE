@@ -218,8 +218,8 @@ function mergeWorkstreamsWithoutMilestones(
   return merged;
 }
 
-/** % of milestones under each workstream with status Completed (uses full `items`, not search/status filter). */
-function buildWorkstreamCompletionPercentById(items) {
+/** Milestone counts per workstream for timeline + % (uses full `items`, not search/status filter). */
+function buildWorkstreamCompletionStatsById(items) {
   const buckets = new Map();
   for (const row of items) {
     const wid = row.initiative?.workstream?.id;
@@ -232,9 +232,44 @@ function buildWorkstreamCompletionPercentById(items) {
   const out = new Map();
   for (const [wid, { total, completed }] of buckets) {
     if (total === 0) out.set(wid, null);
-    else out.set(wid, Math.round((completed / total) * 100));
+    else {
+      out.set(wid, {
+        total,
+        completed,
+        pct: Math.round((completed / total) * 100),
+      });
+    }
   }
   return out;
+}
+
+/** Workstream row: one segment per milestone, filled left-to-right for completed count. */
+function CompletionTimelineWorkstream({ stats }) {
+  if (!stats) {
+    return <span className="completion-timeline completion-timeline--empty">—</span>;
+  }
+  const { total, completed, pct } = stats;
+  const label = `${completed} of ${total} milestones (${pct}%)`;
+  return (
+    <div
+      className="completion-timeline completion-timeline--workstream"
+      role="img"
+      aria-label={label}
+      title={label}
+    >
+      <div className="completion-timeline__row">
+        <div className="completion-timeline__segments" aria-hidden>
+          {Array.from({ length: total }, (_, i) => (
+            <span
+              key={i}
+              className={`completion-timeline__segment${i < completed ? ' completion-timeline__segment--done' : ''}`}
+            />
+          ))}
+        </div>
+        <span className="completion-timeline__pct" aria-hidden>{pct}%</span>
+      </div>
+    </div>
+  );
 }
 
 /** Display string for a user in dropdowns / table (name preferred). */
@@ -433,8 +468,8 @@ export default function TransformationPage() {
     [filteredItems, workstreamsList, items, search, filterStatus],
   );
 
-  const workstreamCompletionPct = useMemo(
-    () => buildWorkstreamCompletionPercentById(items),
+  const workstreamCompletionStats = useMemo(
+    () => buildWorkstreamCompletionStatsById(items),
     [items],
   );
 
@@ -738,7 +773,7 @@ export default function TransformationPage() {
                   <th>End Date</th>
                   <th>Status</th>
                   <th>RAG health</th>
-                  <th className="transformation-tree__th-pct">% Complete</th>
+                  <th className="transformation-tree__th-pct">Progress</th>
                   {canEdit() && <th className="transformation-tree__actions-col">Actions</th>}
                 </tr>
               </thead>
@@ -751,8 +786,7 @@ export default function TransformationPage() {
               ) : (
                 grouped.map((group) => {
                   const expanded = openWs.has(group.workstream.id);
-                  const wsPct = workstreamCompletionPct.get(group.workstream.id);
-                  const wsPctLabel = wsPct == null ? '—' : `${wsPct}%`;
+                  const wsStats = workstreamCompletionStats.get(group.workstream.id);
                   const wsRag = workstreamDisplayRag.get(group.workstream.id) ?? '';
                   return (
                     <tbody key={group.workstream.id}>
@@ -777,8 +811,8 @@ export default function TransformationPage() {
                         >
                           <RagHealthDot value={wsRag} />
                         </td>
-                        <td className="transformation-tree__ws-pct-cell" title="Share of milestones completed in this workstream">
-                          {wsPctLabel}
+                        <td className="transformation-tree__ws-pct-cell">
+                          <CompletionTimelineWorkstream stats={wsStats} />
                         </td>
                         {canEdit() && (
                           <td className="transformation-tree__actions-cell transformation-tree__actions-cell--workstream">

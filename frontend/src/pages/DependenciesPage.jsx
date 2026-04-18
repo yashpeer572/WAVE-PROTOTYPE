@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   dependencies as api,
   workstreams as wsApi,
@@ -9,7 +9,6 @@ import { useAuth } from '../context/AuthContext';
 import DataTable from '../components/DataTable';
 import FilterBar from '../components/FilterBar';
 import Modal from '../components/Modal';
-import { RiskBadge, StatusBadge } from '../components/Badge';
 import toast from 'react-hot-toast';
 
 function IconEdit() {
@@ -41,21 +40,48 @@ export default function DependenciesPage() {
   const [editItem, setEditItem] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = useCallback(() => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
-    Promise.all([
-      api.list(filters),
+    let dependenciesLoaded = false;
+    try {
+      const depRes = await api.list(filters);
+      const rows = depRes.data;
+      setItems(Array.isArray(rows) ? rows : []);
+      dependenciesLoaded = true;
+    } catch (err) {
+      console.error(err);
+      toast.error(err.response?.data?.message || 'Failed to load dependencies');
+      setItems([]);
+    }
+
+    const lookups = await Promise.allSettled([
       wsApi.list(),
       initApi.list(),
-      taskApi.list()
-    ])
-      .then(([res, wsRes, initRes, taskRes]) => {
-        setItems(res.data);
-        setWorkstreams(wsRes.data);
-        setInitiatives(initRes.data);
-        setTasks(taskRes.data);
-      })
-      .finally(() => setLoading(false));
+      taskApi.list(),
+    ]);
+    const [wsR, initR, taskR] = lookups;
+    if (wsR.status === 'fulfilled' && Array.isArray(wsR.value.data)) {
+      setWorkstreams(wsR.value.data);
+    } else {
+      setWorkstreams([]);
+      if (wsR.status === 'rejected') console.error(wsR.reason);
+    }
+    if (initR.status === 'fulfilled' && Array.isArray(initR.value.data)) {
+      setInitiatives(initR.value.data);
+    } else {
+      setInitiatives([]);
+      if (initR.status === 'rejected') console.error(initR.reason);
+    }
+    if (taskR.status === 'fulfilled' && Array.isArray(taskR.value.data)) {
+      setTasks(taskR.value.data);
+    } else {
+      setTasks([]);
+      if (taskR.status === 'rejected') console.error(taskR.reason);
+    }
+    if (dependenciesLoaded && lookups.some((r) => r.status === 'rejected')) {
+      toast.error('Workstreams, initiatives, or milestones could not all be loaded. Add/edit form may be incomplete.');
+    }
+    setLoading(false);
   }, [filters]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
